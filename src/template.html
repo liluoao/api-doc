@@ -89,18 +89,6 @@
             return false;
         });
     });
-
-    function request(pmethod, purl, pdata=null) {
-        $.ajax({
-            type: pmethod,
-            async: false,
-            url: purl,
-            data: pdata,
-            success: function (x) {
-                return x;
-            }
-        });
-    }
 </script>
 </body>
 </html>

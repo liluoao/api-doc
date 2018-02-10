@@ -3,14 +3,18 @@
 /**
  * Class ApiDoc
  */
-class ApiDoc {
+class ApiDoc
+{
 
     /**
-     * 主正则
-     *
-     * @var string
+     * 模板文件扩展名
      */
-    private $mainRegex = '/(\/\*\*.*?\*\sapi.*?\*\/\s*(public|private|protected)?\s*function\s+.*?\s*?\()/s';
+    const TEMPLATE_FILE_EXTENSION = '.html';
+
+    /**
+     * 注释文件扩展名
+     */
+    const DOC_FILE_EXTENSION = '.php';
 
     /**
      * 需要生成文档的文件路径
@@ -62,12 +66,20 @@ class ApiDoc {
     protected $methodFrequency = 2;
 
     /**
+     * 模板文件名
+     *
+     * @var string
+     */
+    protected $templateName = 'template';
+
+    /**
      * ApiDoc constructor.
      *
      * @param $documentPath
      * @param null $savePath
      */
-    public function __construct($documentPath, $savePath = null) {
+    public function __construct ($documentPath, $savePath = null)
+    {
         $this->setDocumentPath($documentPath);
         if (is_null($savePath)) {
             $this->setSavePath(getcwd() . DIRECTORY_SEPARATOR);
@@ -85,7 +97,8 @@ class ApiDoc {
      * @param int $methodFrequency 方法名中出现大写字母次数时转换
      * @return void
      */
-    public function setCamelCase2SnakeCaseConfig($openController = true, $openMethod = true, $controllerFrequency = 1, $methodFrequency = 2) :void {
+    public function setCamel2SnakeConfig ($openController = true, $openMethod = true, $controllerFrequency = 1, $methodFrequency = 2): void
+    {
         $this->openControllerChange = $openController;
         $this->openMethodChange = $openMethod;
         $this->controllerFrequency = $controllerFrequency;
@@ -99,7 +112,8 @@ class ApiDoc {
      * @param integer $times 出现几次大写字母才转换,默认1次
      * @return string
      */
-    private function camelCase2SnakeCase($str, $times = 1) {
+    private function camelCase2SnakeCase ($str, $times = 1)
+    {
         if (preg_match_all('/[A-Z]/', $str) >= $times) {
             $str = preg_replace_callback('/([A-Z]{1})/', function ($matches) {
                 return '_' . strtolower($matches[0]);
@@ -115,42 +129,108 @@ class ApiDoc {
     }
 
     /**
-     * 递归法获取文件夹下文件
+     * 执行
+     *
+     * @param bool $fetch 是否直接输出
+     * @return bool|mixed|string
+     */
+    public function init ($fetch = false)
+    {
+        $fileList = [];
+        $this->getAllFileInPath($this->getDocumentPath(), $fileList);
+        $inputData = ''; // 主体部分表格
+        $rightList = []; // 侧边栏列表
+
+        foreach ($fileList as $fileName) {
+
+            $fileData = file_get_contents($fileName);
+            $data = $this->getAllNeedTransDoc($fileData);
+
+            foreach ($data as $oneDoc) {
+                $infoData = $this->parse($oneDoc, $fileName);
+                $rightList[basename($fileName)][] = [
+                    'methodName' => $infoData['methodName'],
+                    'requestUrl' => $infoData['requestUrl'],
+                ];
+                $inputData .= $this->generateTable($infoData);
+            }
+        }
+
+        $templateFile = dirname(__FILE__) . DIRECTORY_SEPARATOR . $this->getTemplateName() . self::TEMPLATE_FILE_EXTENSION;
+        $tempData = file_get_contents($templateFile);
+        $tempData = str_replace('{name}', $this->getName(), $tempData);
+        $tempData = str_replace('{main}', $inputData, $tempData);
+        $tempData = str_replace('{right}', $this->makeRight($rightList), $tempData);
+        $tempData = str_replace('{date}', date('Y-m-d H:i:s'), $tempData);
+
+        if (!$fetch) {
+            file_put_contents($this->getSaveFilePathAndName(), $tempData);
+            exit();
+        } else {
+            return $tempData;
+        }
+    }
+
+    /**
+     * 获取文件夹下的所有文件
      *
      * @param string $path 路径
      * @param array $fileList 结果保存的变量
      * @param bool $all 可选,true全部,false当前路径下,默认true.
      */
-    private function getFileList($path, &$fileList = [], $all = true) {
+    private function getAllFileInPath ($path, &$fileList = [], $all = true)
+    {
         if (!is_dir($path)) {
             $fileList = [];
 
             return;
         }
         $data = scandir($path);
-        foreach ($data as $one) {
-            if ($one == '.' or $one == '..') {
+
+        foreach ($data as $oneFile) {
+
+            if ($oneFile == '.' || $oneFile == '..') {
                 continue;
             }
-            $onePath = $path . DIRECTORY_SEPARATOR . $one;
-            $isDir = is_dir($onePath);
-            $extName = substr($one, -4, 4);
-            if ($isDir == false and $extName == '.php') {
-                $fileList[] = $onePath;
-            } elseif ($isDir == true and $all == true) {
-                $this->getFileList($onePath, $fileList, $all);
+
+            $thisFilePath = $path . DIRECTORY_SEPARATOR . $oneFile;
+
+            $isDir = is_dir($thisFilePath);
+
+            $extension = $this->getFileExtension($oneFile);
+
+            if (!$isDir && $extension === self::DOC_FILE_EXTENSION) {
+
+                $fileList[] = $thisFilePath;
+
+            } elseif ($isDir && $all) {
+
+                $this->getAllFileInPath($thisFilePath, $fileList, $all);
+
             }
         }
     }
 
     /**
-     * 获取代码文件中所有可以生成api的注释
+     * 获取文件扩展名
+     *
+     * @param string $filename 完整文件名
+     * @return string
+     */
+    protected function getFileExtension ($filename)
+    {
+        return strrchr($filename, '.');
+    }
+
+    /**
+     * 获取所有可以生成文档的注释
      *
      * @param string $data 代码文件内容
      * @return array
      */
-    private function catchEvery($data) {
-        preg_match_all($this->mainRegex, $data, $matches);
+    private function getAllNeedTransDoc ($data)
+    {
+        preg_match_all('/(\/\*\*.*?\*\sapi.*?\*\/\s*(public|private|protected)?\s*function\s+.*?\s*?\()/s', $data, $matches);
         if (empty($matches[1])) {
             return [];
         } else {
@@ -159,19 +239,23 @@ class ApiDoc {
     }
 
     /**
-     * 解析每一条可以生成API文档的注释成数组
+     * 解析允许的每一条注释
      *
-     * @param string $data 注释文本 catchEvery返回的每个元素
+     * @param string $data 注释文本
      * @param string $fileName 文件名
      * @return array
      */
-    private function parse($data, $fileName) {
-        $fileName = basename($fileName, '.php');
+    private function parse ($data, $fileName)
+    {
+        $fileName = basename($fileName);
         $return = [];
+
         preg_match_all('/(public|private|protected)?\s*function\s+(.*?)\(/', $data, $matches);
         $return['funcName'] = !empty($matches[2][0]) ? $matches[2][0] : '[null]';
+
         preg_match_all('/\/\*\*\s+\*\s+(.*?)\s+\*\s+api\s+/s', $data, $matches);
         $return['methodName'] = !empty($matches[1][0]) ? $matches[1][0] : '[null]';
+
         preg_match_all('/\s+\*\s+api\s+(.*?)\s+(.*?)\s+(\s+\*\s+@)?.*/', $data, $matches);
         $return['requestName'] = !empty($matches[1][0]) ? $matches[1][0] : '[null]';
         $return['requestUrl'] = !empty($matches[2][0]) ? $matches[2][0] : '[null]';
@@ -185,28 +269,32 @@ class ApiDoc {
 
         preg_match_all('/\s+\*\s+@param\s+(.*?)\s+(.*?)\s+(.*?)\s/', $data, $matches);
         if (empty($matches[1])) {
+
             $return['param'] = [];
+
         } else {
+
             for ($i = 0; $i < count($matches[1]); $i++) {
-                $type = !empty($matches[1][$i]) ? $matches[1][$i] : '[null]';
-                $var = !empty($matches[2][$i]) ? $matches[2][$i] : '[null]';
-                $about = !empty($matches[3][$i]) ? $matches[3][$i] : '[null]';
                 $return['param'][] = [
-                    'type' => $type,
-                    'var' => $var,
-                    'about' => $about,
+                    'type' => !empty($matches[1][$i]) ? $matches[1][$i] : '[null]',
+                    'var' => !empty($matches[2][$i]) ? $matches[2][$i] : '[null]',
+                    'about' => !empty($matches[3][$i]) ? $matches[3][$i] : '[null]'
                 ];
             }
+
         }
+
         preg_match_all('/\s+\*\s+@return\s+(.*?)\s+(.*?)\s+(.*?)\s/', $data, $matches);
         if (empty($matches[1])) {
+
             $return['return'] = [];
+
         } else {
             for ($i = 0; $i < count($matches[1]); $i++) {
                 $type = !empty($matches[1][$i]) ? $matches[1][$i] : '[null]';
                 $var = !empty($matches[2][$i]) ? $matches[2][$i] : '[null]';
                 $about = !empty($matches[3][$i]) ? $matches[3][$i] : '[null]';
-                if (strpos($about, '*/') !== false) {
+                if (strpos($about, '*/')) {
                     $about = $var;
                     $var = '';
                 }
@@ -224,11 +312,41 @@ class ApiDoc {
     /**
      * 每个API生成表格
      *
-     * @param array $data 每个API的信息 由parse返回的
-     * @return string html代码
+     * @param array $data 解析后的API信息
+     * @return string
      */
-    private function makeTable($data) {
-        $return = '<div id="' . base64_encode($data['requestUrl']) . '" class="api-main">
+    private function generateTable ($data)
+    {
+        $return = $this->getHeader($data);
+        if (count($data['param']) > 0) {
+            $return .= $this->getTableHeader('请求');
+            foreach ($data['param'] as $param) {
+                $return .= $this->getTableContent($param);
+            }
+            $return .= $this->getTableBottom();
+        }
+        if (count($data['return']) > 0) {
+            $return .= $this->getTableHeader('返回');
+            foreach ($data['return'] as $param) {
+                $return .= $this->getTableContent($param);
+            }
+            $return .= $this->getTableBottom();
+        }
+
+        $return .= $this->getBottom();
+
+        return $return;
+    }
+
+    /**
+     * 获取头部
+     *
+     * @param array $data
+     * @return string
+     */
+    protected function getHeader ($data)
+    {
+        return '<div id="' . base64_encode($data['requestUrl']) . '" class="api-main">
         <div class="title">' . $data['methodName'] . '</div>
         <div class="body">
             <table class="layui-table">
@@ -244,86 +362,76 @@ class ApiDoc {
                 </thead>
             </table>
         </div>';
-        if (count($data['param']) != 0) {
-            $return
-                .= '                    <div class="body">
+    }
+
+    /**
+     * 获取表格头部
+     *
+     * @param string $prefix
+     * @return string
+     */
+    protected function getTableHeader ($prefix)
+    {
+        return '                    <div class="body">
             <table class="layui-table">
                 <thead>
                     <tr>
                         <th>
-                            请求名称
+                            ' . $prefix . '名称
                         </th>
                         <th>
-                            请求类型
+                            ' . $prefix . '类型
                         </th>
                         <th>
-                            请求说明
+                            ' . $prefix . '说明
                         </th>
                     </tr>
                 </thead>
                 <tbody>';
-            foreach ($data['param'] as $param) {
-                $return
-                    .= '<tr>
-                <td>
-                    ' . $param['var'] . '
-                </td>
-                <td>
-                ' . $param['type'] . '
-                </td>
-                <td>
-                ' . $param['about'] . '
-                </td>
-            </tr>';
-            }
-            $return
-                .= '</tbody>
+    }
+
+    /**
+     * 获取表格内容
+     *
+     * @param array $param
+     * @return string
+     */
+    protected function getTableContent ($param)
+    {
+        return '<tr>
+                    <td>
+                        ' . $param['var'] . '
+                    </td>
+                    <td>
+                    ' . $param['type'] . '
+                    </td>
+                    <td>
+                    ' . $param['about'] . '
+                    </td>
+                </tr>';
+    }
+
+    /**
+     * 获取表格底部
+     *
+     * @return string
+     */
+    protected function getTableBottom ()
+    {
+        return '</tbody>
             </table>
         </div>';
-        }
-        if (count($data['return']) != 0) {
-            $return
-                .= '<div class="body">
-            <table class="layui-table">
-                <thead>
-                    <tr>
-                        <th>
-                            返回名称
-                        </th>
-                        <th>
-                            返回类型
-                        </th>
-                        <th>
-                            返回说明
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>';
-            foreach ($data['return'] as $param) {
-                $return
-                    .= '<tr>
-                <td>
-                    ' . $param['var'] . '
-                </td>
-                <td>
-                ' . $param['type'] . '
-                </td>
-                <td>
-                ' . $param['about'] . '
-                </td>
-            </tr>';
-            }
-            $return
-                .= '</tbody>
-            </table>
-        </div>';
-        }
+    }
 
-        $return
-            .= ' <hr>
+    /**
+     * 获取底部
+     *
+     * @return string
+     */
+    protected function getBottom ()
+    {
+        return ' <hr>
         </div>';
-
-        return $return;
     }
 
     /**
@@ -332,10 +440,11 @@ class ApiDoc {
      * @param array $rightList 侧边列表数组
      * @return string html代码
      */
-    private function makeRight($rightList) {
+    private function makeRight ($rightList)
+    {
         $return = '';
-        foreach ($rightList as $d => $file) {
-            $return .= '<blockquote class="layui-elem-quote layui-quote-nm right-item-title">' . $d . '</blockquote>
+        foreach ($rightList as $key => $file) {
+            $return .= '<blockquote class="layui-elem-quote layui-quote-nm right-item-title">' . $key . '</blockquote>
             <ul class="right-item">';
             foreach ($file as $one) {
                 $return .= '<li><a href="#' . base64_encode($one['requestUrl']) . '"><cite>' . $one['methodName'] . '</cite><em>' . $one['requestUrl'] . '</em></a></li>';
@@ -347,73 +456,42 @@ class ApiDoc {
     }
 
     /**
-     * 执行
-     *
-     * @param bool $fetch 是否直接输出
-     * @return bool|mixed|string
-     */
-    public function init($fetch = false) {
-        $fileList = [];
-        $this->getFileList($this->getDocumentPath(), $fileList);
-        $inputData = ''; // 主体部分表格
-        $rightList = []; // 侧边栏列表
-        foreach ($fileList as $fileName) {
-            $fileData = file_get_contents($fileName);
-            $data = $this->catchEvery($fileData);
-            foreach ($data as $one) {
-                $infoData = $this->parse($one, $fileName);
-                $rightList[basename($fileName)][] = [
-                    'methodName' => $infoData['methodName'],
-                    'requestUrl' => $infoData['requestUrl'],
-                ];
-                $inputData .= $this->makeTable($infoData);
-            }
-        }
-        $tempData = file_get_contents(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'template.html');
-        $tempData = str_replace('{name}', $this->getName(), $tempData);
-        $tempData = str_replace('{main}', $inputData, $tempData);
-        $tempData = str_replace('{right}', $this->makeRight($rightList), $tempData);
-        $tempData = str_replace('{date}', date('Y-m-d H:i:s'), $tempData);
-        if (!$fetch) {
-            file_put_contents($this->getSavePath() . $this->getName() . '.html', $tempData);
-            exit();
-        } else {
-            return $tempData;
-        }
-    }
-
-    /**
      * @return string
      */
-    public function getDocumentPath(): string {
+    protected function getDocumentPath (): string
+    {
         return $this->documentPath;
     }
 
     /**
      * @param string $documentPath
      */
-    public function setDocumentPath($documentPath): void {
+    protected function setDocumentPath ($documentPath): void
+    {
         $this->documentPath = $documentPath;
     }
 
     /**
      * @return string
      */
-    public function getSavePath(): string {
+    protected function getSavePath (): string
+    {
         return $this->savePath;
     }
 
     /**
      * @param string $savePath
      */
-    public function setSavePath($savePath): void {
+    protected function setSavePath ($savePath): void
+    {
         $this->savePath = $savePath;
     }
 
     /**
      * @return string
      */
-    public function getName(): string {
+    protected function getName (): string
+    {
         return $this->name;
     }
 
@@ -421,8 +499,34 @@ class ApiDoc {
      *
      * @param string $name
      */
-    public function setName($name): void {
+    public function setName ($name): void
+    {
         $this->name = $name;
     }
 
+    /**
+     * @return string
+     */
+    protected function getTemplateName (): string
+    {
+        return $this->templateName;
+    }
+
+    /**
+     * @param string $templateName
+     */
+    public function setTemplateName (string $templateName): void
+    {
+        $this->templateName = $templateName;
+    }
+
+    /**
+     * 获取生成的API文档保存路径和文件名
+     *
+     * @return string
+     */
+    protected function getSaveFilePathAndName ()
+    {
+        return $this->getSavePath() . $this->getName() . self::TEMPLATE_FILE_EXTENSION;
+    }
 }

@@ -34,7 +34,7 @@ $apiDoc = new ApiDoc('test');
 >包括你的文档名，和 `snake_case` 转换 `camelCase` 的配置
 ```php
 $apiDoc->setName('example');
-$apiDoc->setCamelCase2SnakeCaseConfig(false, false, 0, 0);
+$apiDoc->setCamel2SnakeConfig(false, false, 0, 0);
 ```
 
 4. 执行
@@ -60,3 +60,5 @@ public function hello(string $name, string $say): string {
 ```
 #### 结果：
 ![example](https://raw.githubusercontent.com/liluoao/api-doc/master/test/example.png)
+
+>注：生成后引入LayUI的路径需根据你生成路径修改
