@@ -1,6 +1,6 @@
 # 通过定义PHP Doc规则生成API文档
 
-[![GitHub forks](https://img.shields.io/github/forks/liluoao/api-doc.svg?style=plastic)](https://github.com/liluoao/api-doc/network)
+[![GitHub forks](https://img.shields.io/github/forks/mumbaicat/makeapidoc.svg?style=plastic)](https://github.com/liluoao/api-doc/network/members)
 ----
 
 ## 规则:
