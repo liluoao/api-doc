@@ -3,23 +3,56 @@
 [![GitHub forks](https://img.shields.io/github/forks/mumbaicat/makeapidoc.svg?style=plastic)](https://github.com/liluoao/api-doc/network/members)
 ----
 
-## 规则:
+### 规则:
 
 >首行为空
-第二行为描述
-第三行以**api**开头，接上请求方式和URL
-参数备注中不能出现空格，建议替换成标点符号
+>
+>第二行为描述
+>
+>第三行以**api**开头，接上请求方式和URL
+>
+>参数备注中不能出现空格，建议替换成标点符号
 
+### 使用方法：
+
+1. 引入核心库(或加入你的 `namespace` 后**use**类)
+```php
+require 'src/ApiDoc.php';
+//use your-namespace\ApiDoc;
+```
+
+2. 实例化核心类
+>第一个参数是需要生成文档的文件夹路径
+>
+>第二个参数可选,保存生成文档的路径,默认为当前目录
+```php
+$apiDoc = new ApiDoc('test');
+```
+
+3. (可选)设置
+>包括你的文档名,和snake格式转换camel格式的配置
+```php
+$apiDoc->setName('example');
+$apiDoc->setCamelCase2SnakeCaseConfig(false, false, 0, 0);
+```
+
+4. 执行
+```php
+$apiDoc->init();
+```
+
+### 示例：
+
+需要生成的文件(示例代码见`test/index.php`)：
 ```php
 /**
- * 获取所有列表
- * api GET /index/all
- * @param array $condition 查询条件
- * @param int $page 页数
- * @param int $limit 每页个数
- * @return array 列表结果集
+ * 组合一句问候
+ * api GET /index/hello
+ * @param string $name 你想问候的人
+ * @param string $say 问候语
+ * @return string 组合后的话
  */
-public function all(array $condition, int $page, int $limit) :array {
-
+public function hello(string $name, string $say): string {
+    return "Hello,{$name},{$say}";
 }
 ```
