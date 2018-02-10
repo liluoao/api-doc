@@ -15,10 +15,11 @@
 
 ### 使用方法：
 
-1. 引入核心库(或加入你的 `namespace` 后**use**类)
+1. 引入核心库
 ```php
 require 'src/ApiDoc.php';
-//use your-namespace\ApiDoc;
+//or
+use your-namespace\ApiDoc;
 ```
 
 2. 实例化核心类
@@ -29,8 +30,8 @@ require 'src/ApiDoc.php';
 $apiDoc = new ApiDoc('test');
 ```
 
-3. (可选)设置
->包括你的文档名,和snake格式转换camel格式的配置
+3. 配置（*可选*）
+>包括你的文档名，和 `snake_case` 转换 `camelCase` 的配置
 ```php
 $apiDoc->setName('example');
 $apiDoc->setCamelCase2SnakeCaseConfig(false, false, 0, 0);
@@ -43,7 +44,8 @@ $apiDoc->init();
 
 ### 示例：
 
-需要生成的文件(示例代码见`test/index.php`)：
+需要生成的文件：
+>示例代码 `test/index.php`
 ```php
 /**
  * 组合一句问候
@@ -56,3 +58,5 @@ public function hello(string $name, string $say): string {
     return "Hello,{$name},{$say}";
 }
 ```
+#### 结果：
+![example](https://raw.githubusercontent.com/liluoao/api-doc/master/test/example.png)
