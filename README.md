@@ -62,7 +62,5 @@ public function hello(string $name, string $say): string {
     return "Hello,{$name},{$say}";
 }
 ```
-#### 结果：
-![example](https://raw.githubusercontent.com/liluoao/api-doc/master/test/example.png)
 
 >注：生成后引入LayUI的路径需根据你生成路径修改
