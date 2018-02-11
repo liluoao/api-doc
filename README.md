@@ -1,6 +1,6 @@
 # 通过定义PHP Doc规则生成API文档
 
-[![GitHub forks](https://img.shields.io/github/forks/mumbaicat/makeapidoc.svg?style=plastic)](https://github.com/liluoao/api-doc/network/members)
+[![GitHub stars](https://img.shields.io/github/stars/liluoao/api-doc.svg?style=for-the-badge)](https://github.com/liluoao/api-doc/stargazers) [![GitHub forks](https://img.shields.io/github/forks/liluoao/api-doc.svg?style=for-the-badge)](https://github.com/liluoao/api-doc/network) [![Packagist](https://img.shields.io/packagist/v/liluoao/api-doc.svg?style=for-the-badge)](https://packagist.org/packages/liluoao/api-doc) [![GitHub license](https://img.shields.io/github/license/liluoao/api-doc.svg?style=for-the-badge)](https://github.com/liluoao/api-doc/blob/master/LICENSE)
 ----
 
 ### 规则:
@@ -15,11 +15,15 @@
 
 ### 使用方法：
 
-1. 引入核心库
+1. 引入本库
+```
+composer require liluoao/api-doc
+```
+或直接下载源码
 ```php
-require 'src/ApiDoc.php';
-//or
 use your-namespace\ApiDoc;
+//or
+require 'src/ApiDoc.php';
 ```
 
 2. 实例化核心类
