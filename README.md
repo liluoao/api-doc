@@ -62,5 +62,3 @@ public function hello(string $name, string $say): string {
     return "Hello,{$name},{$say}";
 }
 ```
-
->注：生成后引入LayUI的路径需根据你生成路径修改
