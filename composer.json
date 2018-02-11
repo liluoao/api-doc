@@ -1,0 +1,34 @@
+{
+    "name": "liluoao/api-doc",
+    "description": "Generate API doc from PHPDoc.",
+    "keywords": [
+        "api-documentation",
+        "phpdoc"
+    ],
+    "homepage": "https://github.com/liluoao/api-doc",
+    "time": "2018-02-11",
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "authors": [
+        {
+            "name": "Li Luoao",
+            "email": "liluoao@qq.com",
+            "homepage": "https://github.com/liluoao",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Liluoao\\ApiDoc\\": "src"
+        }
+    },
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
+        }
+    }
+}
