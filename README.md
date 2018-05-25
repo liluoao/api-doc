@@ -2,7 +2,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/liluoao/api-doc.svg?style=for-the-badge)](https://github.com/liluoao/api-doc/stargazers) [![GitHub forks](https://img.shields.io/github/forks/liluoao/api-doc.svg?style=for-the-badge)](https://github.com/liluoao/api-doc/network) [![Packagist](https://img.shields.io/packagist/v/liluoao/api-doc.svg?style=for-the-badge)](https://packagist.org/packages/liluoao/api-doc) [![GitHub license](https://img.shields.io/github/license/liluoao/api-doc.svg?style=for-the-badge)](https://github.com/liluoao/api-doc/blob/master/LICENSE)
 
-![](https://github.styleci.io/repos/120990562/shield?branch=master)
+[![](https://github.styleci.io/repos/120990562/shield?branch=master)](https://github.styleci.io/analyses/qr6mbV#)
 ----
 
 ### 使用方法：
