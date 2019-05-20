@@ -55,9 +55,3 @@ public function hello(string $name, string $say): string {
     return "Hello,{$name},{$say}";
 }
 ```
-
-### 联系我们：
-
-  欢迎对本项目提**Issue**和**PR**
-
-[![Email](https://img.shields.io/badge/%E9%82%AE%E7%AE%B1-liluoao%40qq.com-orange.svg?style=for-the-badge)](mailto:liluoao@qq.com)  [![SegmentFault](https://img.shields.io/badge/SegmentFault-李罗奥-brightgreen.svg?style=for-the-badge)](https://segmentfault.com/u/liluoao)  [![Juejin](https://img.shields.io/badge/掘金-李罗奥-blue.svg?style=for-the-badge)](https://juejin.im/user/5a19374cf265da4332274600)
